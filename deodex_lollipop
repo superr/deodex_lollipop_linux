@@ -6,6 +6,7 @@ api=22   # 5.0.X = 21, 5.1.X =22
 
 # Do not edit below
 base=$(pwd)
+cd $base/tools
 
 echo ""
 echo ""
@@ -25,14 +26,17 @@ fi
 
 if [ ! -d "$base/system/framework/$arch" ]; then
 	echo "ERROR:"
-	echo "This does not appear to be a Lollipop rom. This tool will not work for you currently."
+	echo "This tool cannot continue currently. Check the following:"
+	echo ""
+	echo "1. Make sure this is a Lollipop rom."
+	echo "2. Make sure you adjusted the arch variable at the top of the script correctly."
+	echo "3. Make sure your rom is not already deodexed."
 	echo ""
 	read -p "Press Enter to Exit"
 	exit
 fi
 
-rm -rf $base/main.log
-rm -rf $base/zip.log
+rm -rf $base/logs/*.log
 
 echo "-------------------------------------"
 echo "Start extracting boot.oat ..."
@@ -40,7 +44,7 @@ echo "-------------------------------------"
 echo ""
 
 if [ ! -d "$base/system/framework/$arch/odex" ]; then
-	java -Xmx512m -jar oat2dex.jar boot $base/system/framework/$arch/boot.oat >> $base/main.log
+	java -Xmx512m -jar oat2dex.jar boot $base/system/framework/$arch/boot.oat >> $base/logs/main.log
 fi
 
 echo ""
@@ -53,18 +57,18 @@ for app in $( ls $base/system/app ); do
 		echo ""
 		echo "... Deodexing $app"
 		echo ""
-		java -Xmx512m -jar oat2dex.jar $base/system/app/$app/$arch/$app.odex $base/system/framework/$arch/odex >> $base/main.log
-		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app.dex -o $base/system/app/$app/$arch/smali >> $base/main.log
-		java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali -o $base/system/app/$app/$arch/classes.dex >> $base/main.log
+		java -Xmx512m -jar oat2dex.jar $base/system/app/$app/$arch/$app.odex $base/system/framework/$arch/odex >> $base/logs/main.log
+		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app.dex -o $base/system/app/$app/$arch/smali >> $base/logs/main.log
+		java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali -o $base/system/app/$app/$arch/classes.dex >> $base/logs/main.log
 			if [ -f "$base/system/app/$app/$arch/$app-classes2.dex" ]; then
-				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes2.dex -o $base/system/app/$app/$arch/smali2 >> $base/main.log
-				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali2 -o $base/system/app/$app/$arch/classes2.dex >> $base/main.log
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes2.dex -o $base/system/app/$app/$arch/smali2 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali2 -o $base/system/app/$app/$arch/classes2.dex >> $base/logs/main.log
 			fi
 			if [ -f "$base/system/app/$app/$arch/$app-classes3.dex" ]; then
-				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes3.dex -o $base/system/app/$app/$arch/smali3 >> $base/main.log
-				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali3 -o $base/system/app/$app/$arch/classes3.dex >> $base/main.log
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes3.dex -o $base/system/app/$app/$arch/smali3 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali3 -o $base/system/app/$app/$arch/classes3.dex >> $base/logs/main.log
 			fi
-		7za u -tzip $base/system/app/$app/$app.apk $base/system/app/$app/$arch/classes*.dex >> $base/zip.log
+		7za u -tzip $base/system/app/$app/$app.apk $base/system/app/$app/$arch/classes*.dex >> $base/logs/zip.log
 		rm -rf $base/system/app/$app/$arch
 	else 
 		echo "... $app is already deodexed"
@@ -81,18 +85,18 @@ for privapp in $( ls $base/system/priv-app ); do
 		echo ""
 		echo "... Deodexing $privapp"
 		echo ""
-		java -Xmx512m -jar oat2dex.jar $base/system/priv-app/$privapp/$arch/$privapp.odex $base/system/framework/$arch/odex >> $base/main.log
-		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp.dex -o $base/system/priv-app/$privapp/$arch/smali >> $base/main.log
-		java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali -o $base/system/priv-app/$privapp/$arch/classes.dex >> $base/main.log
+		java -Xmx512m -jar oat2dex.jar $base/system/priv-app/$privapp/$arch/$privapp.odex $base/system/framework/$arch/odex >> $base/logs/main.log
+		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp.dex -o $base/system/priv-app/$privapp/$arch/smali >> $base/logs/main.log
+		java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali -o $base/system/priv-app/$privapp/$arch/classes.dex >> $base/logs/main.log
 			if [ -f "$base/system/priv-app/$privapp/$arch/$privapp-classes2.dex" ]; then
-				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes2.dex -o $base/system/priv-app/$privapp/$arch/smali2 >> $base/main.log
-				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali2 -o $base/system/priv-app/$privapp/$arch/classes2.dex >> $base/main.log
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes2.dex -o $base/system/priv-app/$privapp/$arch/smali2 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali2 -o $base/system/priv-app/$privapp/$arch/classes2.dex >> $base/logs/main.log
 			fi
 			if [ -f "$base/system/priv-app/$privapp/$arch/$privapp-classes3.dex" ]; then
-				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes3.dex -o $base/system/priv-app/$privapp/$arch/smali3 >> $base/main.log
-				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali3 -o $base/system/priv-app/$privapp/$arch/classes3.dex >> $base/main.log
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes3.dex -o $base/system/priv-app/$privapp/$arch/smali3 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali3 -o $base/system/priv-app/$privapp/$arch/classes3.dex >> $base/logs/main.log
 			fi
-		7za u -tzip $base/system/priv-app/$privapp/$privapp.apk $base/system/priv-app/$privapp/$arch/classes*.dex >> $base/zip.log
+		7za u -tzip $base/system/priv-app/$privapp/$privapp.apk $base/system/priv-app/$privapp/$arch/classes*.dex >> $base/logs/zip.log
 		rm -rf $base/system/priv-app/$privapp/$arch
 	else 
 		echo "... $privapp is already deodexed"
@@ -108,20 +112,39 @@ for framework in $( ls $base/system/framework/$arch | grep .odex | rev | cut -c 
 	echo ""
 	echo "... Deodexing $framework"
 	echo ""
-	java -Xmx512m -jar oat2dex.jar $base/system/framework/$arch/$framework.odex $base/system/framework/$arch/odex >> $base/main.log
-	java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework.dex -o $base/system/framework/$arch/smali >> $base/main.log
-	java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali -o $base/system/framework/$arch/classes.dex >> $base/main.log
+	java -Xmx512m -jar oat2dex.jar $base/system/framework/$arch/$framework.odex $base/system/framework/$arch/odex >> $base/logs/main.log
+	java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework.dex -o $base/system/framework/$arch/smali >> $base/logs/main.log
+	java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali -o $base/system/framework/$arch/classes.dex >> $base/logs/main.log
 		if [ -f "$base/system/framework/$arch/$framework-classes2.dex" ]; then
-			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes2.dex -o $base/system/framework/$arch/smali2 >> $base/main.log
-			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali2 -o $base/system/framework/$arch/classes2.dex >> $base/main.log
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes2.dex -o $base/system/framework/$arch/smali2 >> $base/logs/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali2 -o $base/system/framework/$arch/classes2.dex >> $base/logs/main.log
 		fi
 		if [ -f "$base/system/framework/$arch/$framework-classes3.dex" ]; then
-			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes3.dex -o $base/system/framework/$arch/smali3 >> $base/main.log
-			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali3 -o $base/system/framework/$arch/classes3.dex >> $base/main.log
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes3.dex -o $base/system/framework/$arch/smali3 >> $base/logs/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali3 -o $base/system/framework/$arch/classes3.dex >> $base/logs/main.log
 		fi
-	7za u -tzip $base/system/framework/$framework.jar $base/system/framework/$arch/classes*.dex >> $base/zip.log
+	7za u -tzip $base/system/framework/$framework.jar $base/system/framework/$arch/classes*.dex >> $base/logs/zip.log
 	rm -rf $base/system/framework/$arch/smali*
 	rm -rf $base/system/framework/$arch/classes*.dex
+done
+
+for framework2 in $( ls $base/system/framework/$arch/dex | grep .dex | rev | cut -c 5- | rev ); do
+	echo ""
+	echo "... Deodexing $framework2"
+	echo ""
+	java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2.dex -o $base/system/framework/$arch/dex/smali >> $base/logs/main.log
+	java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali -o $base/system/framework/$arch/dex/classes.dex >> $base/logs/main.log
+		if [ -f "$base/system/framework/$arch/dex/$framework2-classes2.dex" ]; then
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes2.dex -o $base/system/framework/$arch/dex/smali2 >> $base/logs/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali2 -o $base/system/framework/$arch/dex/classes2.dex >> $base/logs/main.log
+		fi
+		if [ -f "$base/system/framework/$arch/dex/$framework2-classes3.dex" ]; then
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes3.dex -o $base/system/framework/$arch/dex/smali3 >> $base/logs/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali3 -o $base/system/framework/$arch/dex/classes3.dex >> $base/logs/main.log
+		fi
+	7za u -tzip $base/system/framework/$framework2.jar $base/system/framework/$arch/dex/classes*.dex >> $base/logs/zip.log
+	rm -rf $base/system/framework/$arch/dex/smali*
+	rm -rf $base/system/framework/$arch/dex/classes*.dex
 done
 
 echo ""
@@ -131,10 +154,9 @@ echo "Cleaning up ..."
 echo "-------------------------------------"
 echo ""
 echo ""
-rm -rf $base/system/framework/$arch/odex
-rm -rf $base/system/framework/$arch/dex
-rm -rf $base/system/framework/$arch/*.odex
-rm -rf $base/system/framework/$arch/*.dex
+rm -rf $base/system/framework/$arch
+rm -rf $base/system/framework/*classes2.jar
+rm -rf $base/system/framework/*classes3.jar
 echo ""
 echo "-------------------------------------"
 echo "Deodexing complete"
