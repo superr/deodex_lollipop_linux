@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# User configurable lines
+arch=arm   # Check the framework directory, you should see another directory. The name of it should go here (ex. arm, arm64, x86)
+api=22   # 5.0.X = 21, 5.1.X =22
+
+# Do not edit below
+base=$(pwd)
+
+echo ""
+echo ""
+echo "Deodex Lollipop for Linux"
+echo "       By SuperR"
+sleep 1
+echo ""
+echo ""
+echo ""
+if [ ! -d "$base/system/framework" ]; then
+	echo "MISSING FRAMEWORK:"
+	echo "You must copy at least the framework directory from your ROM into the system directory located in the root of this tool."
+	echo ""
+	read -p "Press Enter to Exit"
+	exit
+fi
+
+if [ ! -d "$base/system/framework/$arch" ]; then
+	echo "ERROR:"
+	echo "This does not appear to be a Lollipop rom. This tool will not work for you currently."
+	echo ""
+	read -p "Press Enter to Exit"
+	exit
+fi
+
+rm -rf $base/main.log
+rm -rf $base/zip.log
+
+echo "-------------------------------------"
+echo "Start extracting boot.oat ..."
+echo "-------------------------------------"
+echo ""
+
+if [ ! -d "$base/system/framework/$arch/odex" ]; then
+	java -Xmx512m -jar oat2dex.jar boot $base/system/framework/$arch/boot.oat >> $base/main.log
+fi
+
+echo ""
+echo "-------------------------------------"
+echo "Start deodexing /system/app ..."
+echo "-------------------------------------"
+echo ""
+for app in $( ls $base/system/app ); do
+	if [ -d "$base/system/app/$app/$arch" ]; then
+		echo ""
+		echo "... Deodexing $app"
+		echo ""
+		java -Xmx512m -jar oat2dex.jar $base/system/app/$app/$arch/$app.odex $base/system/framework/$arch/odex >> $base/main.log
+		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app.dex -o $base/system/app/$app/$arch/smali >> $base/main.log
+		java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali -o $base/system/app/$app/$arch/classes.dex >> $base/main.log
+			if [ -f "$base/system/app/$app/$arch/$app-classes2.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes2.dex -o $base/system/app/$app/$arch/smali2 >> $base/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali2 -o $base/system/app/$app/$arch/classes2.dex >> $base/main.log
+			fi
+			if [ -f "$base/system/app/$app/$arch/$app-classes3.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/app/$app/$arch/$app-classes3.dex -o $base/system/app/$app/$arch/smali3 >> $base/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/app/$app/$arch/smali3 -o $base/system/app/$app/$arch/classes3.dex >> $base/main.log
+			fi
+		7za u -tzip $base/system/app/$app/$app.apk $base/system/app/$app/$arch/classes*.dex >> $base/zip.log
+		rm -rf $base/system/app/$app/$arch
+	else 
+		echo "... $app is already deodexed"
+	fi
+done
+
+echo ""
+echo "-------------------------------------"
+echo "Start deodexing /system/priv-app ..."
+echo "-------------------------------------"
+echo ""
+for privapp in $( ls $base/system/priv-app ); do
+	if [ -d "$base/system/priv-app/$privapp/$arch" ]; then
+		echo ""
+		echo "... Deodexing $privapp"
+		echo ""
+		java -Xmx512m -jar oat2dex.jar $base/system/priv-app/$privapp/$arch/$privapp.odex $base/system/framework/$arch/odex >> $base/main.log
+		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp.dex -o $base/system/priv-app/$privapp/$arch/smali >> $base/main.log
+		java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali -o $base/system/priv-app/$privapp/$arch/classes.dex >> $base/main.log
+			if [ -f "$base/system/priv-app/$privapp/$arch/$privapp-classes2.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes2.dex -o $base/system/priv-app/$privapp/$arch/smali2 >> $base/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali2 -o $base/system/priv-app/$privapp/$arch/classes2.dex >> $base/main.log
+			fi
+			if [ -f "$base/system/priv-app/$privapp/$arch/$privapp-classes3.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/priv-app/$privapp/$arch/$privapp-classes3.dex -o $base/system/priv-app/$privapp/$arch/smali3 >> $base/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/priv-app/$privapp/$arch/smali3 -o $base/system/priv-app/$privapp/$arch/classes3.dex >> $base/main.log
+			fi
+		7za u -tzip $base/system/priv-app/$privapp/$privapp.apk $base/system/priv-app/$privapp/$arch/classes*.dex >> $base/zip.log
+		rm -rf $base/system/priv-app/$privapp/$arch
+	else 
+		echo "... $privapp is already deodexed"
+	fi
+done
+
+echo ""
+echo "-------------------------------------"
+echo "Start deodexing /system/framework ..."
+echo "-------------------------------------"
+echo ""
+for framework in $( ls $base/system/framework/$arch | grep .odex | rev | cut -c 6- | rev ); do
+	echo ""
+	echo "... Deodexing $framework"
+	echo ""
+	java -Xmx512m -jar oat2dex.jar $base/system/framework/$arch/$framework.odex $base/system/framework/$arch/odex >> $base/main.log
+	java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework.dex -o $base/system/framework/$arch/smali >> $base/main.log
+	java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali -o $base/system/framework/$arch/classes.dex >> $base/main.log
+		if [ -f "$base/system/framework/$arch/$framework-classes2.dex" ]; then
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes2.dex -o $base/system/framework/$arch/smali2 >> $base/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali2 -o $base/system/framework/$arch/classes2.dex >> $base/main.log
+		fi
+		if [ -f "$base/system/framework/$arch/$framework-classes3.dex" ]; then
+			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/$framework-classes3.dex -o $base/system/framework/$arch/smali3 >> $base/main.log
+			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/smali3 -o $base/system/framework/$arch/classes3.dex >> $base/main.log
+		fi
+	7za u -tzip $base/system/framework/$framework.jar $base/system/framework/$arch/classes*.dex >> $base/zip.log
+	rm -rf $base/system/framework/$arch/smali*
+	rm -rf $base/system/framework/$arch/classes*.dex
+done
+
+echo ""
+echo ""
+echo "-------------------------------------"
+echo "Cleaning up ..."
+echo "-------------------------------------"
+echo ""
+echo ""
+rm -rf $base/system/framework/$arch/odex
+rm -rf $base/system/framework/$arch/dex
+rm -rf $base/system/framework/$arch/*.odex
+rm -rf $base/system/framework/$arch/*.dex
+echo ""
+echo "-------------------------------------"
+echo "Deodexing complete"
+echo "-------------------------------------"
+echo ""
+echo ""
+echo ""
+echo "   -----------------------"
+echo "   - Press ENTER to exit -"
+echo "   -----------------------"
+read -p ""
