@@ -1,1 +1,5 @@
 /versions
+/system/framework
+/system/app
+/system/priv-app
+/logs/*.log
