@@ -13,11 +13,13 @@ echo "-                                                  -"
 echo "----------------------------------------------------"
 echo ""
 if [ $(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q') -lt "17" ]; then
+	echo "MISSING DEPENDENCY:"
 	echo "You need at least Java 7 to use this tool."
 	read -p "Press ENTER to exit"
 	exit
 fi
 if [ ! $(command -v 7za) ]; then
+	echo "MISSING DEPENDENCY:"
 	echo "You need p7zip-full (7za) to use this tool."
 	read -p "Press ENTER to exit"
 	exit
@@ -34,21 +36,27 @@ fi
 
 echo "Type the arch of your device and press ENTER."
 echo ""
-echo "Hint: Check the framework directory, you should see"
+echo "HINT:"
+echo "Check the framework directory, you should see"
 echo "another directory inside. The name of it should go"
-echo "here (ex. arm, arm64, x86)"
+echo "here (ex. arm, arm64, x86)."
 echo ""
 read arch 
 echo ""
 echo "----------------------------------------------------"
 echo ""
-echo "Type the API level of the ROM and press ENTER."
-echo ""
-echo "Hint: 5.0.X = 21, 5.1.X = 22"
-echo ""
-read api
-echo ""
-echo ""
+
+api=""
+while [[ $api -lt "21" || $api -gt "22" ]] ; do
+	echo "Type the API level of the ROM and press ENTER."
+	echo ""
+	echo "HINT:"
+	echo "5.0.x = 21"
+	echo "5.1.x = 22"
+	echo ""
+	read api
+	echo ""
+done
 
 if [ ! -d "$base/system/framework/$arch" ]; then
 	echo "ERROR:"
@@ -67,7 +75,7 @@ fi
 rm -rf $base/logs/*.log
 
 echo "----------------------------------------------------"
-echo "Start extracting boot.oat ..."
+echo "Start deoptimizing boot.oat ..."
 echo "----------------------------------------------------"
 echo ""
 
@@ -157,22 +165,24 @@ for framework in $( ls $base/system/framework/$arch | grep .odex | rev | cut -c 
 done
 
 for framework2 in $( ls $base/system/framework/$arch/dex | grep .dex | rev | cut -c 5- | rev ); do
-	echo ""
-	echo "... Deodexing $framework2"
-	echo ""
-	java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2.dex -o $base/system/framework/$arch/dex/smali >> $base/logs/main.log
-	java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali -o $base/system/framework/$arch/dex/classes.dex >> $base/logs/main.log
-		if [ -f "$base/system/framework/$arch/dex/$framework2-classes2.dex" ]; then
-			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes2.dex -o $base/system/framework/$arch/dex/smali2 >> $base/logs/main.log
-			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali2 -o $base/system/framework/$arch/dex/classes2.dex >> $base/logs/main.log
-		fi
-		if [ -f "$base/system/framework/$arch/dex/$framework2-classes3.dex" ]; then
-			java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes3.dex -o $base/system/framework/$arch/dex/smali3 >> $base/logs/main.log
-			java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali3 -o $base/system/framework/$arch/dex/classes3.dex >> $base/logs/main.log
-		fi
-	7za u -tzip $base/system/framework/$framework2.jar $base/system/framework/$arch/dex/classes*.dex >> $base/logs/zip.log
-	rm -rf $base/system/framework/$arch/dex/smali*
-	rm -rf $base/system/framework/$arch/dex/classes*.dex
+	if [[ $framework2 != *"classes"* ]]; then
+		echo ""
+		echo "... Deodexing $framework2"
+		echo ""
+		java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2.dex -o $base/system/framework/$arch/dex/smali >> $base/logs/main.log
+		java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali -o $base/system/framework/$arch/dex/classes.dex >> $base/logs/main.log
+			if [ -f "$base/system/framework/$arch/dex/$framework2-classes2.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes2.dex -o $base/system/framework/$arch/dex/smali2 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali2 -o $base/system/framework/$arch/dex/classes2.dex >> $base/logs/main.log
+			fi
+			if [ -f "$base/system/framework/$arch/dex/$framework2-classes3.dex" ]; then
+				java -Xmx512m -jar baksmali.jar -a $api -x $base/system/framework/$arch/dex/$framework2-classes3.dex -o $base/system/framework/$arch/dex/smali3 >> $base/logs/main.log
+				java -Xmx512m -jar smali.jar -a $api $base/system/framework/$arch/dex/smali3 -o $base/system/framework/$arch/dex/classes3.dex >> $base/logs/main.log
+			fi
+		7za u -tzip $base/system/framework/$framework2.jar $base/system/framework/$arch/dex/classes*.dex >> $base/logs/zip.log
+		rm -rf $base/system/framework/$arch/dex/smali*
+		rm -rf $base/system/framework/$arch/dex/classes*.dex
+	fi
 done
 
 echo ""
@@ -183,8 +193,6 @@ echo "----------------------------------------------------"
 echo ""
 echo ""
 rm -rf $base/system/framework/$arch
-rm -rf $base/system/framework/*classes2.jar
-rm -rf $base/system/framework/*classes3.jar
 echo ""
 echo "----------------------------------------------------"
 echo "Deodexing complete"
