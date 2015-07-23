@@ -14,3 +14,8 @@ In your terminal, type the following where "/home/user/location/" is the directo
 
 cd /home/user/location/
 ./deodex_lollipop
+
+Dependencies:
+
+Java 7 (or higher)
+p7zip-full (to run 7za commands)

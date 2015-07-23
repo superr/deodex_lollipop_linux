@@ -12,6 +12,16 @@ echo "-                    by SuperR                     -"
 echo "-                                                  -"
 echo "----------------------------------------------------"
 echo ""
+if [ $(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q') -lt "17" ]; then
+	echo "You need at least Java 7 to use this tool."
+	read -p "Press ENTER to exit"
+	exit
+fi
+if [ ! $(command -v 7za) ]; then
+	echo "You need p7zip-full (7za) to use this tool."
+	read -p "Press ENTER to exit"
+	exit
+fi
 if [ ! -d "$base/system/framework" ]; then
 	echo "MISSING FRAMEWORK:"
 	echo "You must copy at least the framework directory from"
