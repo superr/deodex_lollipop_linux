@@ -5,26 +5,35 @@
 base=$(pwd)
 cd $base/tools
 
+echo ""
+echo ""
+echo ""
+echo ""
 echo "----------------------------------------------------"
 echo "-                                                  -"
 echo "-            Deodex Lollipop for Linux             -"
 echo "-                    by SuperR                     -"
 echo "-                                                  -"
 echo "----------------------------------------------------"
-echo ""
+sleep 3
+clear
+
 if [ $(java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q') -lt "17" ]; then
+	echo ""
 	echo "MISSING DEPENDENCY:"
 	echo "You need at least Java 7 to use this tool."
 	read -p "Press ENTER to exit"
 	exit
 fi
 if [ ! $(command -v 7za) ]; then
+	echo ""
 	echo "MISSING DEPENDENCY:"
 	echo "You need p7zip-full (7za) to use this tool."
 	read -p "Press ENTER to exit"
 	exit
 fi
 if [ ! -d "$base/system/framework" ]; then
+	echo ""
 	echo "MISSING FRAMEWORK:"
 	echo "You must copy at least the framework directory from"
 	echo "your ROM into the system directory located in the"
@@ -34,20 +43,32 @@ if [ ! -d "$base/system/framework" ]; then
 	exit
 fi
 
-echo "Type the arch of your device and press ENTER."
-echo ""
-echo "HINT:"
-echo "Check the framework directory, you should see"
-echo "another directory inside. The name of it should go"
-echo "here (ex. arm, arm64, x86)."
-echo ""
-read arch 
-echo ""
-echo "----------------------------------------------------"
-echo ""
+arch=""
+while [[ ! -f $base/system/framework/$arch/boot.oat ]]; do
+	echo ""
+	echo "Configure the arch of your device."
+	echo ""
+	echo "HINT:"
+	echo "Check the framework directory, you should see"
+	echo "another directory inside. The name of it should go"
+	echo "here (ex. arm, arm64, x86)."
+	echo ""
+	echo "If you can't get past this part, check the"
+	echo "following:"
+	echo ""
+	echo "1. Make sure this is a Lollipop rom."
+	echo "2. Make sure you typed the arch variable correctly."
+	echo "3. Make sure your rom is not already deodexed."
+	echo ""
+	echo "Type the arch of your device and press ENTER."
+	echo ""
+	read arch 
+	clear
+done
 
 api=""
 while [[ $api -lt "21" || $api -gt "22" ]] ; do
+	echo ""
 	echo "Type the API level of the ROM and press ENTER."
 	echo ""
 	echo "HINT:"
@@ -55,25 +76,12 @@ while [[ $api -lt "21" || $api -gt "22" ]] ; do
 	echo "5.1.x = 22"
 	echo ""
 	read api
-	echo ""
+	clear
 done
-
-if [ ! -d "$base/system/framework/$arch" ]; then
-	echo "ERROR:"
-	echo "This tool cannot continue currently. Check the"
-	echo "following:"
-	echo ""
-	echo "1. Make sure this is a Lollipop rom."
-	echo "2. Make sure you typed the arch variable at the"
-	echo "   beginning correctly."
-	echo "3. Make sure your rom is not already deodexed."
-	echo ""
-	read -p "Press Enter to Exit"
-	exit
-fi
 
 rm -rf $base/logs/*.log
 
+echo ""
 echo "----------------------------------------------------"
 echo "Start deoptimizing boot.oat ..."
 echo "----------------------------------------------------"
@@ -193,6 +201,7 @@ echo "----------------------------------------------------"
 echo ""
 echo ""
 rm -rf $base/system/framework/$arch
+clear
 echo ""
 echo "----------------------------------------------------"
 echo "Deodexing complete"
