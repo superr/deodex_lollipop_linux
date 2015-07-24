@@ -96,6 +96,20 @@ echo "----------------------------------------------------"
 echo "Start deodexing /system/app ..."
 echo "----------------------------------------------------"
 echo ""
+
+app=""
+for app in $( ls $base/system/app ); do
+	if [ -f "$base/system/app/$app/$arch/$app.odex.gz" ]; then
+		cd $base/system/app/$app/$arch
+		echo ""
+		echo "... Extracting $app.odex.gz"
+		echo ""
+		7za e "$base/system/app/$app/$arch/$app.odex.gz" >> $base/logs/zip.log
+	fi
+done
+
+cd $base/tools
+app=""
 for app in $( ls $base/system/app ); do
 	if [ -d "$base/system/app/$app/$arch" ]; then
 		echo ""
@@ -124,6 +138,21 @@ echo "----------------------------------------------------"
 echo "Start deodexing /system/priv-app ..."
 echo "----------------------------------------------------"
 echo ""
+
+privapp=""
+for privapp in $( ls $base/system/priv-app ); do
+	if [ -f "$base/system/priv-app/$privapp/$arch/$privapp.odex.gz" ]; then
+		cd $base/system/priv-app/$privapp/$arch
+		echo ""
+		echo "... Extracting $privapp.odex.gz"
+		echo ""
+		7za e "$base/system/priv-app/$privapp/$arch/$privapp.odex.gz" >> $base/logs/zip.log
+	fi
+done
+
+cd $base/tools
+
+privapp=""
 for privapp in $( ls $base/system/priv-app ); do
 	if [ -d "$base/system/priv-app/$privapp/$arch" ]; then
 		echo ""
