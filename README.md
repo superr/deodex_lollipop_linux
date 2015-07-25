@@ -1,4 +1,4 @@
-# Deodex Lollipop v1.5
+# Deodex Lollipop v1.6
 # by SuperR
 
 This tool is intended to deodex /system/app, /system/priv-app, and /system/framework in Android Lollipop.
