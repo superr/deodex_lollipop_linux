@@ -1,4 +1,4 @@
-# Deodex Lollipop v1.7
+# Deodex Lollipop v1.8
 # by SuperR
 
 This tool is intended to deodex /system/app, /system/priv-app, and /system/framework in Android Lollipop.
@@ -6,7 +6,8 @@ This tool is intended to deodex /system/app, /system/priv-app, and /system/frame
 Usage:
 
 1. Copy the 3 above mentioned directories from your odexed ROM into the /system directory at the root of this tool.
-2. run "deodex_lollipop" from it's location in terminal 
+2. (optional) Copy /system/build.prop from your ROM for automatic API detection
+2. Run "deodex_lollipop" from it's location in terminal 
 
 Example:
 
